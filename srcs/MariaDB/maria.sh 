@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -e #if anything returns something different than 0, it force quits everything
+
+quit_maria() {
+    maria-admin shutdown & wait $!
+    echo "Maria quits!" 
+}
+
+trap "quit_maria" SIGTERM SIGINT EXIT #watch signals and shutdown maria in case of sigterm 
+
+#run maria 
+if [ "$REQUEST" = "run" ]; then
+    echo "Starting Maria..."
+    exec mariadbd &
+    wait $!
+    exit 1
+fi
+
+#init maria 
+if [ "$REQUEST" = "initialize" ]; then
+    initialize_status="Maria is already initialized
+    if [ ! -f "$DIR_DATA/ibdata1" ]; then
+        echo "Init Maria..."
+        initialize_status="Maria is ready!"
+        mariadb-install-db \
+            --user="$USER" \
+            --datadir="$DIR_DATA" \
+            --auth-root-authentication-method=socket &
+        wait $!
+    fi
+
+    echo "$initialize_status"
+fi
