@@ -1,15 +1,70 @@
 version: "3.7"
 
+networks:
+  inception:
+    driver: bridge
+
+volumes:
+  wp:
+    driver: local
+  maria:
+    driver: local
+  nginx:
+    driver: local
+
 services:
-	mariadb:
-		image: mariadb
-		container_name: mariadb
-		restart: always
-		enviroment:
-			MYSQL_ROOT_PASSWORD: secure
-		volumes:
-			- ./data:/var/lib/mysql
-		ports:
-			- 3306:3306
+  mariadb:
+    image: mariadb
+    container_name: mariadb
+    hostname: mariadb
+    build: ./requirements/mariadb
+    restart: always
+    volumes:
+      - /home/lpraca-l/data/maria:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      DIR_DATA: ${DIR_DATA}
+    ports:
+      - 3306:3306
+    networks:
+      - inception
 
+  wordpress:
+    container_name: wordpress
+    image: wordpress
+    hostname: wordpress
+    build: ./requirements/wordpress
+    depends_on:      
+      - mariadb
+    volumes:
+      - /home/lpraca-l/data/wp:/var/www/html
+    environment:
+      WORDPRESS_MARIA_HOST: ${WORDPRESS_MARIA_HOST}
+      WORDPRESS_MARIA_NAME: ${WORDPRESS_MARIA_NAME}
+      WORDPRESS_MARIA_USER: ${WORDPRESS_MARIA_USER}
+      WORDPRESS_MARIA_PASSWORD: ${WORDPRESS_MARIA_PASSWORD}
+    networks:
+      - inception
+    ports:
+      - 80:80
+    restart: always
 
+  nginx:
+    image: nginx
+    container_name: nginx
+    hostname: nginx
+    build: ./requirements/nginx
+    restart: always
+    volumes:
+      - /home/lpraca-l/data/nginx:/etc/nginx/conf.d     
+      - /data/html:/var/www/html
+    environment:
+      NGINX_USERNAME: ${NGINX_USERNAME}
+      NGINX_PASSWORD: ${NGINX_PASSWORD}
+    ports:     
+      - 443:443
+    networks:
+      - inception
