@@ -48,7 +48,7 @@ services:
     networks:
       - inception
     ports:
-      - 8080:80
+      - 9000
     restart: always
 
   nginx:
@@ -62,7 +62,6 @@ services:
       - mariadb
     volumes:
       - /home/lpraca-l/data/wp:/var/www/html
-      - /home/lpraca-l/data/nginx:/etc/nginx
     environment:
       NGINX_USERNAME: ${NGINX_USERNAME}
       NGINX_PASSWORD: ${NGINX_PASSWORD}

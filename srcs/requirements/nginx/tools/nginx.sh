@@ -6,7 +6,7 @@ set -e
 echo "Starting Nginx setup..."
 
 echo "checking ngix folde"
-ls -l /etc/nginx/
+cat /etc/nginx/nginx.conf
 echo "that was it"
 
 # Ensure www-data user and group exist
