@@ -4,7 +4,7 @@ set -e  # Exit immediately if a command exits with a non-zero status
 
 # Function to gracefully shut down MariaDB
 quit_maria() {
-    mysqladmin shutdown
+    mysqladmin -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" shutdown
     echo "MariaDB has shut down."
 }
 
@@ -23,26 +23,25 @@ if [ ! -f "$DIR_DATA/ibdata1" ]; then
     echo "Initializing MariaDB..."
 
     mariadb-install-db \
-        --user="$USER" \
+        --user=mysql \
         --datadir="$DIR_DATA" \
-        --auth-root-authentication-method=socket &
-    wait $!
-    
-    # Start MariaDB temporarily to set up database and user
-    mariadbd-safe --skip-networking &
+        --auth-root-authentication-method=socket
+
+    # Start MariaDB temporarily
+    mariadbd --skip-networking --datadir="$DIR_DATA" &
     pid="$!"
 
     # Wait for MariaDB to be ready
     until mariadb -u root -e "status" &>/dev/null; do
-      echo "Waiting for MariaDB to start..."
-      sleep 1
+        echo "Waiting for MariaDB to start..."
+        sleep 1
     done
 
-    # Create the database and user if they do not exist
+    # Create the database and user using environment variables
     mariadb -u root <<EOF
-CREATE DATABASE IF NOT EXISTS $MSQL_DATABASE;
+CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE;
 CREATE USER IF NOT EXISTS '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';
-GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MSQL_USER'@'%';
+GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%';
 FLUSH PRIVILEGES;
 EOF
 
@@ -57,4 +56,4 @@ fi
 
 # Start MariaDB in normal mode
 echo "Starting MariaDB..."
-exec mariadb
+exec mariadbd --user=mysql --datadir="$DIR_DATA"

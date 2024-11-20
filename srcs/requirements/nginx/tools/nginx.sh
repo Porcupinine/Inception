@@ -1,16 +1,39 @@
-#!/bin/bash
+#!/bin/sh
 
-mkdir -p /etc/nginx/ssl/certs
+set -e
 
-# Configuring ssl certificate
-if [ ! -f /etc/nginx/ssl/certs/inception.crt ]; then
-    openssl req -x509 -nodes -out /etc/nginx/ssl/certs/inception.crt \
-    -keyout /etc/nginx/ssl/certs/inception.key \
-    -subj "/C=NL/ST=NH/L=Amsterdam/O=42/OU=Codam/CN=blpraca-l.42.fr/UID=lpraca-l"
+# Debugging step
+echo "Starting Nginx setup..."
 
-    chmod 755 /var/www/html && chown -R www-data:www-data /var/www/html
-    chmod 777 /etc/nginx/ssl/ && chown -R www-data:www-data /etc/nginx/ssl/
+echo "checking ngix folde"
+ls -l /etc/nginx/
+echo "that was it"
+
+# Ensure www-data user and group exist
+if ! id -u www-data &>/dev/null; then
+    echo "Creating www-data user..."
+    addgroup -S www-data && adduser -S www-data -G www-data
 fi
 
-echo "Nginx is ready";
-exec "$@";
+# Ensure permissions are correct for the web directory
+echo "Setting correct permissions for /var/www/html"
+chown -R www-data:www-data /var/www/html
+
+# Generate SSL certificates if they don't exist
+if [ ! -f /etc/nginx/ssl/certs/inception.crt ]; then
+    mkdir -p /etc/nginx/ssl/certs /etc/nginx/ssl/private
+    openssl req -x509 -nodes -days 365 \
+        -newkey rsa:2048 \
+        -keyout /etc/nginx/ssl/private/inception.key \
+        -out /etc/nginx/ssl/certs/inception.crt \
+        -subj "/C=US/ST=Test/L=Test/O=Test/OU=Test/CN=localhost"
+    echo "SSL certificates generated."
+fi
+
+# Ensure the correct permissions for SSL files
+echo "Setting permissions for SSL certificates"
+chown -R www-data:www-data /etc/nginx/ssl
+
+# Start Nginx in the foreground
+echo "Starting Nginx..."
+nginx -g "daemon off;"
