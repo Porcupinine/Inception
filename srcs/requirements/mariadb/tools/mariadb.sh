@@ -27,21 +27,12 @@ if [ ! -f "$DIR_DATA/ibdata1" ]; then
         --datadir="$DIR_DATA" \
         --auth-root-authentication-method=socket
 
-    # Start MariaDB temporarily
-    mariadbd --skip-networking --datadir="$DIR_DATA" &
-    pid="$!"
-
-    # Wait for MariaDB to be ready
-    until mariadb -u root -e "status" &>/dev/null; do
-        echo "Waiting for MariaDB to start..."
-        sleep 1
-    done
-
     # Create the database and user using environment variables
     mariadb -u root <<EOF
 CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE;
 CREATE USER IF NOT EXISTS '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';
 GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%';
+GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO 'root'@'%';
 FLUSH PRIVILEGES;
 EOF
 

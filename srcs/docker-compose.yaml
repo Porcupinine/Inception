@@ -6,10 +6,22 @@ networks:
 volumes:
   wp:
     driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/lpraca-l/data/wp
   maria:
     driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/lpraca-l/data/maria
   nginx:
     driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/lpraca-l/data/nginx
 
 services:
   mariadb:
@@ -19,7 +31,7 @@ services:
     build: ./requirements/mariadb
     restart: always
     volumes:
-      - /home/lpraca-l/data/maria:/var/lib/mysql
+      - maria:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
@@ -39,9 +51,9 @@ services:
     depends_on:      
       - mariadb
     volumes:
-      - /home/lpraca-l/data/wp:/var/www/html
+      - wp:/var/www/html
     environment:
-      WORDPRESS_MARIA_HOST: ${WORDPRESS_MARIA_HOST}
+      MARIA_HOST: ${MARIA_HOST}
       WORDPRESS_MARIA_NAME: ${WORDPRESS_MARIA_NAME}
       WORDPRESS_MARIA_USER: ${WORDPRESS_MARIA_USER}
       WORDPRESS_MARIA_PASSWORD: ${WORDPRESS_MARIA_PASSWORD}
@@ -61,7 +73,8 @@ services:
       - wordpress
       - mariadb
     volumes:
-      - /home/lpraca-l/data/wp:/var/www/html
+      - wp:/var/www/html
+      - nginx:/etc/nginx
     environment:
       NGINX_USERNAME: ${NGINX_USERNAME}
       NGINX_PASSWORD: ${NGINX_PASSWORD}

@@ -11,6 +11,7 @@ RUN apk add --no-cache mariadb mariadb-client
 RUN mkdir -p /run/mysqld && chown -R mysql:mysql /run/mysqld
 
 # Copy the setup script to the Docker image
+COPY ./conf/mariadb.cnf /etc/my.cnf
 COPY ./tools/mariadb.sh /mariadb.sh
 
 # Make the script executable

@@ -5,7 +5,7 @@ set -e
 # Debugging step
 echo "Starting Nginx setup..."
 
-echo "checking ngix folde"
+echo "checking ngix config file"
 cat /etc/nginx/nginx.conf
 echo "that was it"
 
@@ -21,14 +21,18 @@ chown -R www-data:www-data /var/www/html
 
 # Generate SSL certificates if they don't exist
 if [ ! -f /etc/nginx/ssl/certs/inception.crt ]; then
-    mkdir -p /etc/nginx/ssl/certs /etc/nginx/ssl/private
+    echo "hello"
+    mkdir -p /etc/nginx/ssl/certs /etc/nginx/ssl/keys
     openssl req -x509 -nodes -days 365 \
         -newkey rsa:2048 \
-        -keyout /etc/nginx/ssl/private/inception.key \
+        -keyout /etc/nginx/ssl/certs/inception.key \
         -out /etc/nginx/ssl/certs/inception.crt \
         -subj "/C=US/ST=Test/L=Test/O=Test/OU=Test/CN=localhost"
     echo "SSL certificates generated."
 fi
+
+echo "SSL certificate or key:"
+ls -l /etc/nginx/ssl/certs /etc/nginx/ssl/*
 
 # Ensure the correct permissions for SSL files
 echo "Setting permissions for SSL certificates"
@@ -36,4 +40,6 @@ chown -R www-data:www-data /etc/nginx/ssl
 
 # Start Nginx in the foreground
 echo "Starting Nginx..."
+# exec "$@";
 nginx -g "daemon off;"
+echo "this shit is done and I'm done with this shit"
