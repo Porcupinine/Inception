@@ -1,11 +1,11 @@
-#!/bin/sh
-
+#!/bin/bash
+set -x  # show all commands
 set -e  # Exit immediately if a command exits with a non-zero status
 
 # Function to gracefully shut down MariaDB
 quit_maria() {
-    mysqladmin -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" shutdown
-    echo "MariaDB has shut down."
+	mysqladmin -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" shutdown
+	echo "MariaDB has shut down."
 }
 
 # Trap to catch termination signals and run quit_maria
@@ -14,37 +14,29 @@ trap "quit_maria" SIGTERM SIGINT EXIT
 # Debugging step
 echo "DIR_DATA is set to: $DIR_DATA"
 
-# Create and set permissions for the data directory
-mkdir -p "$DIR_DATA"
-chown -R mysql:mysql "$DIR_DATA"
-
 # Check if MariaDB has been initialized by looking for the ibdata1 file
-if [ ! -f "$DIR_DATA/ibdata1" ]; then
-    echo "Initializing MariaDB..."
+if [ ! -f "$DIR_DATA/db_setup.lock" ]; then
+	echo "Initializing my database..."
 
-    mariadb-install-db \
-        --user=mysql \
-        --datadir="$DIR_DATA" \
-        --auth-root-authentication-method=socket
+	# Start MariaDB temporarily to create database and users
+	service mariadb start
 
-    # Create the database and user using environment variables
-    mariadb -u root <<EOF
-CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE;
-CREATE USER IF NOT EXISTS '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';
-GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%';
-GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO 'root'@'%';
-FLUSH PRIVILEGES;
+	# Create the database and user using environment variables
+	mariadb -u root <<EOF
+	CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE;
+	CREATE USER IF NOT EXISTS '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';
+	GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%';
+	FLUSH PRIVILEGES;
 EOF
 
-    echo "Database '$MYSQL_DATABASE' and user '$MYSQL_USER' have been created and configured."
+	service mariadb stop
 
-    # Stop the temporary MariaDB process
-    kill "$pid"
-    wait "$pid"
+	echo "Database '$MYSQL_DATABASE' and user '$MYSQL_USER' have been created and configured."
+	touch $DIR_DATA/db_setup.lock
 else
-    echo "MariaDB is already initialized."
+	echo "MariaDB is already initialized."
 fi
 
 # Start MariaDB in normal mode
 echo "Starting MariaDB..."
-exec mariadbd --user=mysql --datadir="$DIR_DATA"
+exec gosu mysql "$@"
