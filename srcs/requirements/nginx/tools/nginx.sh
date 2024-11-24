@@ -1,13 +1,23 @@
 #!/bin/sh
 
-set -e
+set -e  # Exit immediately if a command exits with a non-zero status
+
+# Function to gracefully shut down MariaDB
+quit_nginx() {
+    nginx -s stop
+	echo "Nginx has shut down."
+}
+
+# Trap to catch termination signals and run quit_maria
+trap "quit_nginx" SIGTERM SIGINT EXIT
 
 # Debugging step
 echo "Starting Nginx setup..."
 
-echo "checking ngix config file"
-cat /etc/nginx/nginx.conf
-echo "that was it"
+
+# echo "checking nginx config file"
+# cat /etc/nginx/nginx.conf
+# echo "that was it"
 
 # Ensure www-data user and group exist
 if ! id -u www-data &>/dev/null; then
