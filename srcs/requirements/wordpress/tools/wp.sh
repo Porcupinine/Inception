@@ -21,7 +21,7 @@ else
     wp core install --url="$WORDPRESS_URL" --title="$WORDPRESS_TITLE" --admin_user="$WORDPRESS_ADMIN_USER" --admin_password="$WORDPRESS_ADMIN_PASSWORD" --admin_email="$WORDPRESS_ADMIN_MAIL" --allow-root
     # create a new user with the below details
     wp user create "$WORDPRESS_USER" "$WORDPRESS_USER_MAIL" --user_pass="$WORDPRESS_USER_PASSWORD" --allow-root
-
+    wp theme install RetroGeek --activate --allow-root
     echo "WordPress configured!"
 fi
 
